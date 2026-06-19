@@ -2,7 +2,7 @@
 title: Java Fortress  
 date: 2026-06-19 10:05:00 -0400  
 categories: [Security]  
-tags: [Java, programming, security]  
+tags: [Java, Programming, Security]  
 ---  
 > This article is undergoing active changes. Once it is complete, a repository will be hosted for the modified JVM I've made.
 {: .prompt-danger }
@@ -98,3 +98,7 @@ The result of all of this is that our binary is completely unusable by existing 
 ## Second Layer Protection
 ----
 So you've done all your modifications to your JVM. Existing tooling no longer works and without reverse engineering your JVM they cannot inspect things easily. But we want to make them work for that. I recommend applying secondary level protection such as Themida, Code Virtualizer, or a custom VM within your custom decoding/encoding paths. This will ensure that 99.9% of people will not have the skills to inspect your class files. And that remaining 0.1% probably don't want to deal with the headache.
+
+## Acknowledgements
+----
+The developers of [Stalcraft](https://store.steampowered.com/app/1818450/STALCRAFT_X/), for making me go through the hell that was reversing their implementation of this.
