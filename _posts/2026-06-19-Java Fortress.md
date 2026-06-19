@@ -37,7 +37,8 @@ I've spent almost 20 years working with Java, and JVMs, but I would be lying if 
 ### .class Header
 We need to locate 2 parts for every modification:
 1. The encoding (compiler)
-2. The decoding (JVM runtime, possibly JIT)
+2. The decoding (JVM runtime)  
+
 This is because in order for this to work, the compiler needs to generate our proprietary data, and the JVM needs to be able to work with it.  
   
 Looking at the [specifications](https://docs.oracle.com/javase/specs/jvms/se8/html/jvms-4.html), we can see `0xCAFEBABE` are the first 4 bytes of every .class file. We're going to make an assumption they don't access the individual bytes. Searching for the magic number used for identifying .class files, we find quite a few results:
@@ -63,6 +64,35 @@ Looking at the [specifications](https://docs.oracle.com/javase/specs/jvms/se8/ht
 ./jdk.hotspot.agent/share/classes/sun/jvm/hotspot/tools/jcore/ClassWriter.java:88:        dos.writeInt(0xCAFEBABE);
 ```
 After playing around with a few different ways of accomplishing with we want, I landed on the most viable way: create a secondary decoding/encoding pass while leaving the first intact. This is because OpenJDK bootstraps itself, and making outright modifications to the format is not feasible.
+
+Most of the changes are pretty straight forward, we create 2 identical paths, the custom encoding is enable using the JVM argument `jdk.experimentalWrite`. The paths take 2 forms:
+```c
+if (magic == 0xCAFEBAB6)) {
+	// original code - which we will modify later 
+} else {
+	// original code
+}
+```
+For decoding  
+
+```c
+if (!strcmp(Arguments::get_property("jdk.experimentalWrite"), "true")) {
+	// original code - which we will modify later 
+} else {
+	// original code
+}
+```
+For encoding in CPP files
+
+```java
+if (Boolean.getBoolean("jdk.experimentalWrite")) {
+	// original code - which we will modify later 
+} else {
+	// original code
+}
+```
+For encoding in Java files
+
 
 After creating secondary paths for all the decoding/encoding results found above, we compile a simple hello world Java application. We toggle our custom format encoding with the JVM argument `jdk.experimentalWrite`. There's 2 decoding/encoding paths, and decoding does not need a switch. It decides what path to take based on the new magic number.
 ```java
@@ -90,6 +120,38 @@ Now that we've made a custom file header, and we have split the decoding/encodin
 > This section is incomplete for now.
 {: .prompt-danger }
 
+#### Obfuscation
+We can obfuscate data stored within the class files. Take this block within `ClassWriter.java` for instance:
+```java
+            poolbuf.appendInt(0xCAFEBAB6);
+            if (preview.isEnabled() && preview.usesPreview(c.sourcefile)) {
+                poolbuf.appendChar(ClassFile.PREVIEW_MINOR_VERSION);
+            } else {
+                poolbuf.appendChar(target.minorVersion);
+            }
+            poolbuf.appendChar(target.majorVersion);
+```
+We can make simple changes such as:
+```java
+            poolbuf.appendInt(0xCAFEBAB6);
+            if (preview.isEnabled() && preview.usesPreview(c.sourcefile)) {
+                poolbuf.appendChar(ClassFile.PREVIEW_MINOR_VERSION ^ (char)0x11);
+            } else {
+                poolbuf.appendChar(target.minorVersion ^ (char)0x11);
+            }
+            poolbuf.appendChar(target.majorVersion ^ (char)0x92);
+```
+We then propagate this to the 7-8 other custom encoding/decoding paths, and we end up with this:
+![obfuscated_versions](assets/obfuscated_versions.png)
+And it runs perfectly fine, because the custom decoding path for `0xCADEBAB6` does the same XOR.
+```sh
+~/Documents/code/jvmf-test  
+❯ /home/x/Documents/code/java-openjdk/src/jdk26u-jdk-26.0.1-8/build/linux-x86_64-server-release/jdk/bin/javac -J-Djdk.experimentalWrite=true HelloWorld.java  
+  
+~/Documents/code/jvmf-test  
+❯ /home/x/Documents/code/java-openjdk/src/jdk26u-jdk-26.0.1-8/build/linux-x86_64-server-release/jdk/bin/java HelloWorld  
+Hello, World!
+```
 ### Result
 ----
 The result of all of this is that our binary is completely unusable by existing reverse engineering tools. The difficulty of someone recovering the original data back depends on how much time you put in, and how creative you get.
