@@ -1,0 +1,5 @@
+main p > a.popup:not(.normal):not(.left):not(.right) {
+  position: relative;
+  left: 0%;
+  transform: none;
+}
