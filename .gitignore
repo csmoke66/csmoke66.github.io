@@ -1,0 +1,26 @@
+.bundle
+vendor
+Gemfile.lock
+
+.jekyll-cache
+.jekyll-metadata
+_site
+
+*.gem
+
+node_modules
+package-lock.json
+
+.idea
+.vscode/*
+
+# Misc
+_sass/vendors
+assets/js/dist
+
+.gitmodules
+.obsidian/*
+.devcontainer/*
+tools/*
+
+Gemfile
