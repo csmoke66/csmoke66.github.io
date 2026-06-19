@@ -65,7 +65,7 @@ Looking at the [specifications](https://docs.oracle.com/javase/specs/jvms/se8/ht
 ```
 After playing around with a few different ways of accomplishing with we want, I landed on the most viable way: create a secondary decoding/encoding pass while leaving the first intact. This is because OpenJDK bootstraps itself, and making outright modifications to the format is not feasible.
 
-Most of the changes are pretty straight forward, we create 2 identical paths, the custom encoding is enable using the JVM argument `jdk.experimentalWrite`. The paths take 2 forms:
+Most of the changes are pretty straight forward, we create 2 identical paths, the custom encoding is enabled using the JVM argument `jdk.experimentalWrite`. The paths take 2 forms:
 ```c
 if (magic == 0xCAFEBAB6)) {
 	// original code - which we will modify later 
