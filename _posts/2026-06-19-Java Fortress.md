@@ -1,7 +1,7 @@
 ---  
 title: Java Fortress  
 date: 2026-06-19 10:05:00 -0400  
-categories: [Security]  
+categories: [Security, Scorched Earth]  
 tags: [Java, Programming, Security]  
 ---  
 > This article is undergoing active changes. Once it is complete, a repository will be hosted for the modified JVM I've made.
